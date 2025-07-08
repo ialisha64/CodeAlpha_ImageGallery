@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Image Gallery</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f0f0f0;
+      padding: 20px;
+    }
+    .gallery-container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .filter-buttons {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .filter-buttons button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      background-color: #333;
+      color: white;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: background-color 0.3s;
+    }
+    .filter-buttons button:hover,
+    .filter-buttons button.active {
+      background-color: #555;
+    }
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .gallery-item {
+      position: relative;
+      overflow: hidden;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .gallery-item img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.3s ease;
+    }
+    .gallery-item:hover img {
+      transform: scale(1.1);
+    }
+    .gallery-item:hover::after {
+      content: 'View Image';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      background-color: rgba(0, 0, 0, 0.7);
+      padding: 10px;
+      border-radius: 5px;
+    }
+    .lightbox {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .lightbox-content {
+      max-width: 90%;
+      max-height: 80%;
+      border-radius: 8px;
+    }
+    .lightbox-nav {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(0, 0, 0, 0.5);
+      color: white;
+      border: none;
+      padding: 15px;
+      cursor: pointer;
+      font-size: 24px;
+      border-radius: 5px;
+    }
+    .prev {
+      left: 10px;
+    }
+    .next {
+      right: 10px;
+    }
+    .close {
+      position: absolute;
+      top: 10px;
+      right: 20px;
+      color: white;
+      font-size: 30px;
+      cursor: pointer;
+    }
+    @media (max-width: 768px) {
+      .gallery {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      }
+      .gallery-item img {
+        height: 150px;
+      }
+      .filter-buttons button {
+        padding: 8px 15px;
+        font-size: 14px;
+      }
+    }
+    @media (max-width: 480px) {
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+      .gallery-item img {
+        height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="gallery-container">
+    <div class="filter-buttons">
+      <button data-filter="all" class="active">All</button>
+      <button data-filter="nature">Nature</button>
+      <button data-filter="city">City</button>
+      <button data-filter="animals">Animals</button>
+    </div>
+    <div class="gallery">
+      <div class="gallery-item" data-category="nature">
+        <img src="https://static.vecteezy.com/system/resources/thumbnails/053/003/435/small_2x/glowing-red-succulent-plant-in-dark-nature-photo.jpg" alt="Nature 1">
+      </div>
+      <div class="gallery-item" data-category="city">
+        <img src="https://burst.shopifycdn.com/photos/city-street-at-night.jpg?width=1000&format=pjpg&exif=0&iptc=0" alt="City 1">
+      </div>
+      <div class="gallery-item" data-category="animals">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRt3xUhAJ41AoayRZv3VF9jhDRhzxZS9C6qhQ&s" alt="Animal 1">
+      </div>
+      <div class="gallery-item" data-category="nature">
+        <img src="https://www.insidewink.com/wp-content/uploads/2020/04/Jean_Trebek_Beauty_in_Nature.jpg" alt="Nature 2">
+      </div>
+      <div class="gallery-item" data-category="city">
+        <img src="https://burst.shopifycdn.com/photos/city-landscape-at-night.jpg?width=1000&format=pjpg&exif=0&iptc=0" alt="City 2">
+      </div>
+      <div class="gallery-item" data-category="animals">
+        <img src="https://images.pexels.com/photos/45201/kitty-cat-kitten-pet-45201.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500" alt="Animal 2">
+      </div>
+    </div>
+  </div>
+  <div class="lightbox">
+    <span class="close">×</span>
+    <img class="lightbox-content" src="">
+    <button class="lightbox-nav prev">&lt;</button>
+    <button class="lightbox-nav next">&gt;</button>
+  </div>
+  <script>
+    const galleryItems = document.querySelectorAll('.gallery-item');
+    const lightbox = document.querySelector('.lightbox');
+    const lightboxContent = document.querySelector('.lightbox-content');
+    const closeBtn = document.querySelector('.close');
+    const prevBtn = document.querySelector('.prev');
+    const nextBtn = document.querySelector('.next');
+    const filterButtons = document.querySelectorAll('.filter-buttons button');
+    let currentIndex = 0;
+    let filteredItems = Array.from(galleryItems);
+
+    // Open lightbox
+    galleryItems.forEach((item, index) => {
+      item.addEventListener('click', () => {
+        currentIndex = filteredItems.indexOf(item);
+        showLightbox();
+      });
+    });
+
+    // Close lightbox
+    closeBtn.addEventListener('click', () => {
+      lightbox.style.display = 'none';
+    });
+
+    // Navigate to previous image
+    prevBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex - 1 + filteredItems.length) % filteredItems.length;
+      showLightbox();
+    });
+
+    // Navigate to next image
+    nextBtn.addEventListener('click', () => {
+      currentIndex = (currentIndex + 1) % filteredItems.length;
+      showLightbox();
+    });
+
+    // Show lightbox with current image
+    function showLightbox() {
+      if (filteredItems.length === 0) {
+        lightbox.style.display = 'none';
+        return;
+      }
+      lightboxContent.src = filteredItems[currentIndex].querySelector('img').src;
+      lightbox.style.display = 'flex';
+    }
+
+    // Filter images by category
+    filterButtons.forEach(button => {
+      button.addEventListener('click', () => {
+        const filter = button.getAttribute('data-filter');
+        filterButtons.forEach(btn => btn.classList.remove('active'));
+        button.classList.add('active');
+
+        if (filter === 'all') {
+          filteredItems = Array.from(galleryItems);
+          galleryItems.forEach(item => item.style.display = 'block');
+        } else {
+          filteredItems = Array.from(galleryItems).filter(item =>
+            item.getAttribute('data-category') === filter
+          );
+          galleryItems.forEach(item => {
+            item.style.display = item.getAttribute('data-category') === filter ? 'block' : 'none';
+          });
+        }
+        currentIndex = 0;
+      });
+    });
+
+    // Close lightbox when clicking outside the image
+    lightbox.addEventListener('click', (e) => {
+      if (e.target === lightbox) {
+        lightbox.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
